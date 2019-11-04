@@ -1,4 +1,4 @@
-package hello.world;
+package tcc.totvs.emprestimos;
 
 /**
  * Hello world!
