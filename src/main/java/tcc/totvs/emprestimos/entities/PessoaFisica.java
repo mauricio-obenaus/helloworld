@@ -3,10 +3,10 @@ package tcc.totvs.emprestimos.entities;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
 
-@Data
+@Getter
 @Builder 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PessoaFisica {

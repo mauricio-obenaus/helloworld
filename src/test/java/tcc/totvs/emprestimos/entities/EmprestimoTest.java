@@ -7,32 +7,39 @@ import java.time.LocalDate;
 import javax.money.MonetaryAmount;
 
 import org.javamoney.moneta.FastMoney;
+import org.junit.Before;
 import org.junit.Test;
 
 import tcc.totvs.emprestimos.entities.Movimentacao.StatusEmprestimo;
 
 public class EmprestimoTest {
 
-	private Conta conta = Conta.of(
-			//id
-			"1234",
-			//empresa
-			Empresa.builder()
-				.cnpj(Cnpj.of("09.456.584/0001-89"))
-				.nome("Empresa dos Devedores")
-				.responsavel(PessoaFisica.builder()
-						.cpf(Cpf.of("111.111.111-11"))
-						.nome("Onzinio das Onze")
-						.build())
-				.valorMercado(FastMoney.of(150000, "BRL"))
-				.numeroEmpregados(10)
-				.build(), 
-			//superior
-			PessoaFisica.builder()
-				.cpf(Cpf.of("222.222.222-22"))
-				.nome("Doisentos Dois")
-				.build());
-	private MonetaryAmount valor = FastMoney.of(5000, "BRL");
+	private Conta conta;
+	private MonetaryAmount valor;
+	
+	@Before
+	public void init() {
+		valor = FastMoney.of(5000, "BRL");
+		conta = Conta.of(
+				//id
+				"1234",
+				//empresa
+				Empresa.builder()
+					.cnpj(Cnpj.of("09.456.584/0001-89"))
+					.nome("Empresa dos Devedores")
+					.responsavel(PessoaFisica.builder()
+							.cpf(Cpf.of("111.111.111-11"))
+							.nome("Onzinio das Onze")
+							.build())
+					.valorMercado(FastMoney.of(150000, "BRL"))
+					.numeroEmpregados(10)
+					.build(), 
+				//superior
+				PessoaFisica.builder()
+					.cpf(Cpf.of("222.222.222-22"))
+					.nome("Doisentos Dois")
+					.build());
+	}
 
 	@Test
 	public void testIsAprovado() {
@@ -74,9 +81,22 @@ public class EmprestimoTest {
 	}
 
 	@Test
+	public void testSemSaldo() {
+		Emprestimo emprestimo = conta.fazerEmprestimo(FastMoney.of(150000, "BRL"));
+		assertEquals(StatusEmprestimo.EMPRESTIMO_AGUARDANDO_LIMITE_EMERGENCIA, emprestimo.getStatus());
+	}
+
+	@Test
+	public void testReprovarSemSaldo() {
+		conta.solicitarLimiteExtra(FastMoney.of(7500, "BRL"));
+		conta.getLimiteExtra().ifPresent(l -> l.aprovar());
+		Emprestimo emprestimo = conta.fazerEmprestimo(FastMoney.of(150000, "BRL"));
+		assertEquals(StatusEmprestimo.EMPRESTIMO_REPROVADO, emprestimo.getStatus());
+	}
+
+	@Test
 	public void testAprovar() {
-		Emprestimo emprestimo = Emprestimo.from(LocalDate.now(), conta, valor);
-		emprestimo.checkState();
+		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		emprestimo.aprovar();
 		assertTrue(emprestimo.isAprovado());
 		assertEquals(StatusEmprestimo.EMPRESTIMO_AGUARDANDO_QUITACAO, emprestimo.getStatus());
@@ -84,8 +104,7 @@ public class EmprestimoTest {
 
 	@Test
 	public void testReprovar() {
-		Emprestimo emprestimo = Emprestimo.from(LocalDate.now(), conta, valor);
-		emprestimo.checkState();
+		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		emprestimo.reprovar();
 		assertTrue(emprestimo.isReprovado());
 		assertEquals(StatusEmprestimo.EMPRESTIMO_AGUARDANDO_LIMITE_EMERGENCIA, emprestimo.getStatus());
@@ -93,8 +112,7 @@ public class EmprestimoTest {
 	
 	@Test(expected = IllegalStateException.class)
 	public void testReaprovar() {
-		Emprestimo emprestimo = Emprestimo.from(LocalDate.now(), conta, valor);
-		emprestimo.checkState();
+		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		emprestimo.aprovar();
 		emprestimo.aprovar();
 		assertTrue("Não deve chegar aqui", emprestimo.isAprovado());
@@ -102,8 +120,7 @@ public class EmprestimoTest {
 
 	@Test(expected = IllegalStateException.class)
 	public void testRereprovar() {
-		Emprestimo emprestimo = Emprestimo.from(LocalDate.now(), conta, valor);
-		emprestimo.checkState();
+		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		emprestimo.reprovar();
 		emprestimo.reprovar();
 		assertTrue("Não deve chegar aqui", emprestimo.isReprovado());
@@ -112,8 +129,7 @@ public class EmprestimoTest {
 
 	@Test
 	public void testSolicitarLimiteEmergencia() {
-		Emprestimo emprestimo = Emprestimo.from(LocalDate.now(), conta, valor);
-		emprestimo.checkState();
+		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		emprestimo.reprovar();
 		emprestimo.solicitarLimiteEmergencia(FastMoney.of(1500, "BRL"));
 		assertTrue(emprestimo.isLimiteEmergenciaSolicitado());
@@ -124,6 +140,7 @@ public class EmprestimoTest {
 	public void testResolicitarLimiteEmergencia() {
 		Emprestimo emprestimo = conta.fazerEmprestimo(valor);
 		conta.solicitarLimiteExtra(FastMoney.of(1500, "BRL"));
+		conta.getLimiteExtra().ifPresent(l -> l.aprovar());
 		emprestimo.reprovar();
 		assertFalse(emprestimo.isLimiteEmergenciaSolicitado());
 	}

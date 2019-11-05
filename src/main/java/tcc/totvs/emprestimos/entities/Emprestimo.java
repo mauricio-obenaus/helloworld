@@ -40,6 +40,7 @@ public class Emprestimo implements Movimentacao {
 		StatusEmprestimo newState = status.rule().next(this);
 		if (newState != this.status) {
 			this.status = newState;
+			newState.getOperacao().aplica(conta, valor);
 			checkState();
 		}
 	}

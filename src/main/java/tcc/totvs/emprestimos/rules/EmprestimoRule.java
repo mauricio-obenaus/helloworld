@@ -3,7 +3,6 @@ package tcc.totvs.emprestimos.rules;
 import tcc.totvs.emprestimos.entities.Conta;
 import tcc.totvs.emprestimos.entities.Emprestimo;
 import tcc.totvs.emprestimos.entities.Movimentacao;
-import tcc.totvs.emprestimos.entities.Movimentacao.Operacao;
 import tcc.totvs.emprestimos.entities.Movimentacao.StatusEmprestimo;
 
 public interface EmprestimoRule {
@@ -100,9 +99,6 @@ public interface EmprestimoRule {
 
 		@Override
 		public StatusEmprestimo next(Emprestimo emprestimo) {
-			Conta conta = emprestimo.getConta();
-			Operacao operacao = StatusEmprestimo.EMPRESTIMO_LIBERADO.getOperacao();
-			operacao.aplica(conta, emprestimo.getValor());
 			return StatusEmprestimo.EMPRESTIMO_AGUARDANDO_QUITACAO;
 		}
 		
