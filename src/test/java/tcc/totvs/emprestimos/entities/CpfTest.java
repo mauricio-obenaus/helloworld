@@ -18,6 +18,12 @@ public class CpfTest {
 		assertEquals("11111111111", cpf.getValue());
 	}
 
+	@Test
+	public void testOfCpf() {
+		Cpf cpf = Cpf.of("749.840.500-80");
+		assertEquals("74984050080", cpf.getValue());
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public void testOfInvalidCpf() {
 		Cpf cpf = Cpf.of("111.111.111-12");

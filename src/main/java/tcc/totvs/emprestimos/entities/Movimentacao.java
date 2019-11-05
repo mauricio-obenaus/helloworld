@@ -6,7 +6,8 @@ import javax.money.MonetaryAmount;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import tcc.totvs.emprestimos.rules.EmprestimoRule;
+import tcc.totvs.emprestimos.rules.LimiteEmergencialRule;
 
 public interface Movimentacao {
 	LocalDate getData();
@@ -29,37 +30,97 @@ public interface Movimentacao {
 	
 	@AllArgsConstructor
 	static enum StatusEmprestimo implements Status{
-		EMPRESTIMO_SOLICITADO(Operacao.NOOP),
-		EMPRESTIMO_REPROVADO(Operacao.NOOP),
-		EMPRESTIMO_APROVADO(Operacao.SUBTRACAO);
+		EMPRESTIMO_SOLICITADO(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.Solicitado();
+			}			
+		},
+		EMPRESTIMO_AGUARDANDO_APROVACAO(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.AguardandoAprovacao();
+			}			
+		},
+		EMPRESTIMO_AGUARDANDO_QUITACAO(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.AguardandoQuitacao();
+			}			
+		},
+		EMPRESTIMO_AGUARDANDO_LIMITE_EMERGENCIA(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.AguardandoLimiteEmergencia();
+			}			
+		},
+		EMPRESTIMO_REPROVADO(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.Reprovado();
+			}			
+		},
+		EMPRESTIMO_LIBERADO(Operacao.SOMA) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.Liberado();
+			}			
+		},
+		EMPRESTIMO_QUITADO(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.Quitado();
+			}			
+		}, 
+		EMPRESTIMO_AGUARDANDO_APROVACAO_LIMITE(Operacao.NOOP) {
+			@Override
+			public EmprestimoRule rule() {
+				return new EmprestimoRule.AguardandoAprovacaoLimite();
+			}
+		};
 
 		@Getter
-		@Setter
 		private Operacao operacao;
 		
+		public abstract EmprestimoRule rule();
 		
 	}
 
 	@AllArgsConstructor
 	static enum StatusDevolucao implements Status{
-		DEVOLUCAO(Operacao.SOMA);
+		DEVOLUCAO(Operacao.SUBTRACAO);
 
 		@Getter
-		@Setter
 		private Operacao operacao;
 		
 		
 	}
 
 	@AllArgsConstructor
-	static enum StatusEmergencial implements Status{
-		LIMITE_SOLICITADO(Operacao.NOOP),
-		LIMITE_REPROVADO(Operacao.NOOP),
-		LIMITE_APROVADO(Operacao.LIMITE_EXTRA);
+	static enum StatusLimiteEmergencial implements Status{
+		LIMITE_SOLICITADO(Operacao.NOOP) {
+			@Override
+			public LimiteEmergencialRule rule() {
+				return new LimiteEmergencialRule.Solicitado();
+			}
+		},
+		LIMITE_REPROVADO(Operacao.LIMITE_EXTRA_REPROVADO) {
+			@Override
+			public LimiteEmergencialRule rule() {
+				return new LimiteEmergencialRule.Reprovado();
+			}
+		},
+		LIMITE_APROVADO(Operacao.LIMITE_EXTRA_APROVADO) {
+			@Override
+			public LimiteEmergencialRule rule() {
+				return new LimiteEmergencialRule.Aprovado();
+			}
+		};
 
 		@Getter
-		@Setter
 		private Operacao operacao;
+		
+		public abstract LimiteEmergencialRule rule();
 		
 		
 	}
@@ -67,21 +128,26 @@ public interface Movimentacao {
 	static enum Operacao {
 		SOMA {
 			public void aplica(Conta conta, MonetaryAmount valor) {
-				conta.adicionaLimite(valor);
+				conta.adicionaSaldo(valor);
 			}
 		},
 		SUBTRACAO {
 			public void aplica(Conta conta, MonetaryAmount valor) {
-				conta.substraiLimite(valor);
+				conta.substraiSaldo(valor);
 			}
 		},
 		NOOP {
-			public void aplica(Conta conta, MonetaryAmount valor) {	
+			public void aplica(Conta conta, MonetaryAmount valor) {
 			}
 		},
-		LIMITE_EXTRA {
+		LIMITE_EXTRA_APROVADO {
 			public void aplica(Conta conta, MonetaryAmount valor) {
-				conta.adicionaLimiteExtra(valor);
+				conta.aplicarLimiteExtra(valor);				
+			}
+		},
+		LIMITE_EXTRA_REPROVADO {
+			public void aplica(Conta conta, MonetaryAmount valor) {
+				conta.verificarEmprestimos();				
 			}
 		};
 		

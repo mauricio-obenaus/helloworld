@@ -18,6 +18,12 @@ public class CnpjTest {
 		assertEquals("09456584000189", cnpj.getValue());
 	}
 
+	@Test
+	public void testOfCnpj() {
+		Cnpj cnpj = Cnpj.of("64.094.277/0001-03");
+		assertEquals("64094277000103", cnpj.getValue());
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public void testOfInvalidCnpj() {
 		Cnpj cnpj = Cnpj.of("09.456.584/0001-90");

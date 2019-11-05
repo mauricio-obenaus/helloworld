@@ -1,6 +1,6 @@
 package tcc.totvs.emprestimos.entities;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import javax.money.MonetaryAmount;
 
@@ -8,9 +8,9 @@ import org.javamoney.moneta.FastMoney;
 import org.junit.Test;
 
 import tcc.totvs.emprestimos.entities.Empresa.EmpresaBuilder;
-import tcc.totvs.emprestimos.rules.DefaultLimitRule;
+import tcc.totvs.emprestimos.rules.LimiteRule.DefaultLimitRule;
 
-public class DefaultLimitRuleTest {
+public class LimitRuleTest {
 	private PessoaFisica pessoaFisica = PessoaFisica.builder().cpf(Cpf.of("111.111.111-11")).nome("Onzinio das Onze").build();
 	private Cnpj cnpj = Cnpj.of("09.456.584/0001-89");
 	private EmpresaBuilder empresaBuilder = Empresa.builder()
