@@ -1,4 +1,3 @@
-# tcc-java-axon
-Sample project to learn java plus axon.
+# tcc-java
+Sample project to learn java.
 
-https://axoniq.io/
